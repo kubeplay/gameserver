@@ -44,11 +44,11 @@ func LoginCmd() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			fmt.Printf("Lets play %s!\n", player.Name)
 			if err := WriteCredentials([]byte(player.AccessToken)); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			fmt.Printf("Lets play %s!\n", player.Name)
 		},
 	}
 	return cmd

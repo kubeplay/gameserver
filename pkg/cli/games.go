@@ -68,16 +68,21 @@ func GameGetCmd() *cobra.Command {
 				Bearer(AccessToken.String()).
 				RequestURI(requestURI).
 				Do()
+			if err := resp.Error(); err != nil {
+				return err
+			}
 			w := new(tabwriter.Writer)
 			w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.AlignRight)
-			fmt.Fprintln(w, "NAME\tCHALLENGE\tKEYS\tDURATION\tSTATUS\t")
 			defer w.Flush()
 			if !isResourceScoped {
 				var itemList types.GameList
 				if err := resp.Into(&itemList); err != nil {
 					return err
 				}
-
+				if len(itemList.Items) == 0 {
+					return fmt.Errorf("No resources found.")
+				}
+				fmt.Fprintln(w, "NAME\tCHALLENGE\tKEYS\tDURATION\tSTATUS\t")
 				for _, gm := range itemList.Items {
 					startTime, _ := time.Parse(time.RFC3339, gm.Status.StartTime)
 					endTime, _ := time.Parse(time.RFC3339, gm.Status.EndTime)
@@ -106,6 +111,8 @@ func GameGetCmd() *cobra.Command {
 				if err := resp.Into(&gm); err != nil {
 					return err
 				}
+
+				fmt.Fprintln(w, "NAME\tCHALLENGE\tKEYS\tDURATION\tSTATUS\t")
 				startTime, _ := time.Parse(time.RFC3339, gm.Status.StartTime)
 				endTime, _ := time.Parse(time.RFC3339, gm.Status.EndTime)
 				delta := endTime.Sub(startTime)

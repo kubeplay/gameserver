@@ -10,6 +10,7 @@ import (
 
 	"github.com/kubeplay/gameserver/pkg/rest"
 	"github.com/kubeplay/gameserver/pkg/types"
+	"github.com/kubeplay/gameserver/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -31,25 +32,31 @@ func ChallengeGetCmd() *cobra.Command {
 				Bearer(AccessToken).
 				RequestURI(requestURI).
 				Do()
+			if err := resp.Error(); err != nil {
+				return err
+			}
 			w := new(tabwriter.Writer)
 			w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.AlignRight)
-			fmt.Fprintln(w, "NAME\tKEYS\t")
-			defer fmt.Fprintln(w)
 			defer w.Flush()
 			if !isResourceScoped {
 				var itemList types.ChallengeList
 				if err := resp.Into(&itemList); err != nil {
 					return err
 				}
+				fmt.Fprintln(w, "NAME\tKEYS\tAGE\t")
 				for _, c := range itemList.Items {
-					fmt.Fprintf(w, "%s\t%d\t", c.Name, len(c.Keys))
+					d := utils.GetDeltaDuration(c.CreatedAt, "")
+					fmt.Fprintf(w, "%s\t%d\t%s\t\n", c.Name, len(c.Keys), d.String())
 				}
 			} else {
 				var c types.Challenge
 				if err := resp.Into(&c); err != nil {
 					return err
 				}
-				fmt.Fprintf(w, "%s\t%d\t", c.Name, len(c.Keys))
+				d := utils.GetDeltaDuration(c.CreatedAt, "")
+				fmt.Fprintln(w, "NAME\tKEYS\tAGE\t")
+				fmt.Fprintf(w, "%s\t%d\t%s\t", c.Name, len(c.Keys), d.String())
+				fmt.Fprintln(w)
 			}
 			return nil
 		},
@@ -59,16 +66,31 @@ func ChallengeGetCmd() *cobra.Command {
 // Host
 func ChallengeCreateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "challenge",
-		Short: "TODO: Create a new challenge.",
+		Use:          "challenge",
+		Short:        "Create a new challenge.",
+		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("missing the resource name")
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c := &types.Challenge{
+				TypeMeta: types.TypeMeta{Kind: types.ChallengeKind},
+				Metadata: types.Metadata{Name: args[0]},
+			}
+			err := rest.NewRequest(nil, GameServerURL).Post().
+				Bearer(AccessToken.String()).
+				RequestURI("/v1/challenges").
+				Body(c).
+				Do().
+				Into(c)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Challenge %q created with uid %s\n", c.Name, c.UID)
+			return nil
 		},
 	}
 }

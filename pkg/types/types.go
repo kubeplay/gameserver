@@ -114,5 +114,5 @@ type PlayerClaims struct {
 
 	AccessToken string `json:"access_token,omitempty"`
 
-	jwt.StandardClaims `json:"-"`
+	jwt.StandardClaims
 }

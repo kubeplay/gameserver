@@ -9,6 +9,7 @@ import (
 
 	"github.com/kubeplay/gameserver/pkg/rest"
 	"github.com/kubeplay/gameserver/pkg/types"
+	"github.com/kubeplay/gameserver/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +31,12 @@ func EventGetCmd() *cobra.Command {
 				Bearer(AccessToken).
 				RequestURI(requestURI).
 				Do()
+			if err := resp.Error(); err != nil {
+				return err
+			}
 			w := new(tabwriter.Writer)
 			w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.AlignRight)
-			fmt.Fprintln(w, "NAME\tPAUSED\t")
-			defer fmt.Fprintln(w)
+			fmt.Fprintln(w, "NAME\tPAUSED\tAGE\t")
 			defer w.Flush()
 			if !isResourceScoped {
 				var eventList types.EventList
@@ -41,14 +44,16 @@ func EventGetCmd() *cobra.Command {
 					return err
 				}
 				for _, ev := range eventList.Items {
-					fmt.Fprintf(w, "%s\t%v\t", ev.Name, ev.Paused)
+					d := utils.GetDeltaDuration(ev.CreatedAt, "")
+					fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d.String())
 				}
 			} else {
 				var ev types.Event
 				if err := resp.Into(&ev); err != nil {
 					return err
 				}
-				fmt.Fprintf(w, "%s\t%v\t", ev.Name, ev.Paused)
+				d := utils.GetDeltaDuration(ev.CreatedAt, "")
+				fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d.String())
 			}
 			return nil
 		},
@@ -84,8 +89,22 @@ func EventCreateCmd() *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ev := &types.Event{
+				TypeMeta: types.TypeMeta{Kind: types.EventKind},
+				Metadata: types.Metadata{Name: args[0]},
+			}
+			err := rest.NewRequest(nil, GameServerURL).Post().
+				Bearer(AccessToken.String()).
+				RequestURI("/v1/events").
+				Body(ev).
+				Do().
+				Into(ev)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Event %q created with uid %s\n", ev.Name, ev.UID)
+			return nil
 		},
 	}
 }

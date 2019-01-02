@@ -62,18 +62,9 @@ func (r *HttpResponse) WriteJSON(obj types.Object) error {
 // GenerateNewJwtToken creates a new user token to allow machine-to-machine interaction
 func GenerateNewJwtToken(key []byte, p *types.PlayerClaims, exp time.Time) error {
 	token := jwt.New(jwt.SigningMethodHS256)
-	// claims := make(jwt.MapClaims)
-	// Set some claims
-	// claims["email"] = p.Email
-	// claims["login"] = p.Login
-	// claims["type"] = "guest"
-	// always convert to UTC time
 	p.ExpiresAt = exp.UTC().Unix()
 	p.IssuedAt = time.Now().UTC().Unix()
-	// claims["exp"] = exp.UTC().Unix()
-	// claims["iat"] = time.Now().UTC().Unix()
 	token.Claims = p
-
 	// Sign and get the complete encoded token as a string
 	var err error
 	p.AccessToken, err = token.SignedString(key)
