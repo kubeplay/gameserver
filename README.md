@@ -13,6 +13,7 @@ JWT_SECRET=goo go run cmd/server/gameserver.go
 go build -o /usr/local/bin/kubeplay cmd/kubeplayctl/kubeplayctl.go
 # Login / GitHub (username/password or username/personal-token)
 # IMPORTANT: Don't execute this command over an insecure network! The server must be served with SSL to avoid credentials leak
+export KUBEPLAY_ADDR=http://localhost:8080
 kubeplay login
 # Add an event
 kubeplay create -f examples/event.yaml
