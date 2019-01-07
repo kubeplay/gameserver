@@ -30,6 +30,8 @@ func (c *challenge) Middlewares() []mux.MiddlewareFunc {
 
 func challengeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// ch, _ := next.(challengeHandler)
+		// fmt.Printf("CH HAND: %#v\n", ch)
 		logrus.WithField("method", r.Method).Info("CHALLENGE MIDDLEWARE")
 		if r.Method == "POST" {
 			// req := context.Get(r, "payload")

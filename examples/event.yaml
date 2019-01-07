@@ -1,0 +1,4 @@
+kind: Event
+metadata:
+  name: meetup
+paused: false

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/context"
+	"github.com/kubeplay/gameserver/pkg/api/auth"
 	"github.com/kubeplay/gameserver/pkg/api/handlers"
 	"github.com/kubeplay/gameserver/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -46,9 +47,18 @@ func authenticationMiddleware(next http.Handler) http.Handler {
 				return
 			}
 			context.Set(r, "player", pl)
+			e, err := auth.NewEnforcer(UserPoliciesFile)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusForbidden)
+				return
+			}
+			if e.Enforce(pl.Username(), r.URL.Path, r.Method) == true {
+				fmt.Printf("%q CAN %q %q\n", pl.Username(), r.Method, r.URL.Path)
+			} else {
+				fmt.Printf("%q CANNOT %q %q\n", pl.Username(), r.Method, r.URL.Path)
+			}
 		}
 		next.ServeHTTP(w, r)
-
 	})
 }
 

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -33,11 +34,6 @@ func New(dbfile, pathPrefix string) *Store {
 	return store
 }
 
-// func (s *Store) ResourceName(name string) *Store {
-// 	s.resourceName = name
-// 	return s
-// }
-
 func (s *Store) Kind(kind string) *Store {
 	// s.kind = strings.ToLower(kind)
 	for _, obj := range types.RegisteredTypes {
@@ -56,13 +52,8 @@ func (s *Store) Resources(keys ...string) *Store {
 	return s
 }
 
-// func (s *Store) Path(keys ...string) *Store {
-// 	s.path = fmt.Sprintf(strings.Join(keys, "/"))
-// 	return s
-// }
-
 func (s *Store) SaveObject(obj types.Object) (types.Object, error) {
-	db, err := s.getDB()
+	db, err := s.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +81,7 @@ func (s *Store) SaveObject(obj types.Object) (types.Object, error) {
 }
 
 func (s *Store) Update(old, new types.Object) (types.Object, error) {
-	db, err := s.getDB()
+	db, err := s.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +110,7 @@ func (s *Store) Update(old, new types.Object) (types.Object, error) {
 }
 
 func (s *Store) Get(name string) (types.Object, error) {
-	db, err := s.getDB()
+	db, err := s.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +134,7 @@ func (s *Store) Get(name string) (types.Object, error) {
 }
 
 func (s *Store) List(re *regexp.Regexp) ([]types.Object, error) {
-	db, err := s.getDB()
+	db, err := s.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -157,13 +148,11 @@ func (s *Store) List(re *regexp.Regexp) ([]types.Object, error) {
 		c := b.Cursor()
 		prefix := []byte(s.GetResourcePath())
 		for k, v := c.Seek(prefix); k != nil && re.Match(k); k, v = c.Next() {
-			// fmt.Println(string(k), string(v))
 			obj := s.newObject()
 			if err := json.Unmarshal(v, obj); err != nil {
 				return err
 			}
 			items = append(items, obj)
-			// logrus.WithField("key", string(k)).Infof(string(v))
 		}
 		return nil
 	})
@@ -171,7 +160,7 @@ func (s *Store) List(re *regexp.Regexp) ([]types.Object, error) {
 }
 
 func (s *Store) Delete(name string) error {
-	db, err := s.getDB()
+	db, err := s.DB()
 	if err != nil {
 		return err
 	}
@@ -182,12 +171,19 @@ func (s *Store) Delete(name string) error {
 			return fmt.Errorf("bucket %q doesn't exists", s.pathPrefix)
 		}
 		s.path = path.Join(s.path, name)
-		return b.Delete([]byte(s.GetResourcePath()))
+		c := b.Cursor()
+		prefix := []byte(s.GetResourcePath())
+		// Lookup and delete all child keys
+		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+			if err := b.Delete(k); err != nil {
+				return err
+			}
+		}
+		return b.Delete(prefix)
 	})
 }
 
 func (s *Store) GetResourcePath() string {
-	// return path.Join("/", s.kind, s.resourceName, s.path)
 	return path.Join("/", s.path)
 }
 
@@ -198,7 +194,7 @@ func (s *Store) newObject() types.Object {
 	return s.objType.New()
 }
 
-func (s *Store) getDB() (*bolt.DB, error) {
+func (s *Store) DB() (*bolt.DB, error) {
 	db, err := bolt.Open(s.dbfile, 0600, nil)
 	if err != nil {
 		return nil, err

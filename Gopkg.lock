@@ -2,6 +2,33 @@
 
 
 [[projects]]
+  digest = "1:5d3e23515e7916c152cc665eda0f7eaf6fdf8fdfe7c3dbac97049bcbd649b33f"
+  name = "github.com/Knetic/govaluate"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d216395917cc49052c7c7094cf57f09657ca08a8"
+  version = "v3.0.0"
+
+[[projects]]
+  digest = "1:76ca0dfcbf951d1868c7449453981dba9e1f79034706d1500a5a785000f5f222"
+  name = "github.com/casbin/casbin"
+  packages = [
+    ".",
+    "config",
+    "effect",
+    "log",
+    "model",
+    "persist",
+    "persist/file-adapter",
+    "rbac",
+    "rbac/default-role-manager",
+    "util",
+  ]
+  pruneopts = "UT"
+  revision = "542e16cac74562eefac970a7d0d1467640d1f1cb"
+  version = "v1.7.0"
+
+[[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
@@ -58,6 +85,14 @@
   version = "v1.2"
 
 [[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
+
+[[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -108,10 +143,19 @@
   pruneopts = "UT"
   revision = "074acd46bca67915925527c07849494d115e7c43"
 
+[[projects]]
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/casbin/casbin",
     "github.com/dgrijalva/jwt-go",
     "github.com/gorilla/context",
     "github.com/gorilla/mux",
@@ -119,6 +163,8 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "go.etcd.io/bbolt",
+    "golang.org/x/crypto/ssh/terminal",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

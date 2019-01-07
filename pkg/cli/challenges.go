@@ -46,7 +46,7 @@ func ChallengeGetCmd() *cobra.Command {
 				fmt.Fprintln(w, "NAME\tKEYS\tAGE\t")
 				for _, c := range itemList.Items {
 					d := utils.GetDeltaDuration(c.CreatedAt, "")
-					fmt.Fprintf(w, "%s\t%d\t%s\t\n", c.Name, len(c.Keys), d.String())
+					fmt.Fprintf(w, "%s\t%d\t%s\t\n", c.Name, len(c.Keys), d)
 				}
 			} else {
 				var c types.Challenge
@@ -55,7 +55,7 @@ func ChallengeGetCmd() *cobra.Command {
 				}
 				d := utils.GetDeltaDuration(c.CreatedAt, "")
 				fmt.Fprintln(w, "NAME\tKEYS\tAGE\t")
-				fmt.Fprintf(w, "%s\t%d\t%s\t", c.Name, len(c.Keys), d.String())
+				fmt.Fprintf(w, "%s\t%d\t%s\t", c.Name, len(c.Keys), d)
 				fmt.Fprintln(w)
 			}
 			return nil
@@ -76,6 +76,8 @@ func ChallengeCreateCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// fmt.Println("INPUT", O.CreateInput)
+			// return nil
 			c := &types.Challenge{
 				TypeMeta: types.TypeMeta{Kind: types.ChallengeKind},
 				Metadata: types.Metadata{Name: args[0]},
@@ -95,6 +97,35 @@ func ChallengeCreateCmd() *cobra.Command {
 	}
 }
 
+func ChallengeDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                   "challenges CHALLENGE",
+		Aliases:               []string{"challenge"},
+		PreRunE:               PreLoad,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("missing the resource name")
+			}
+			return nil
+		},
+		Short: "[HOST] Delete a challenge by its name.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := rest.NewRequest(nil, GameServerURL).Delete().
+				RequestURI("/v1/challenges", args[0]).
+				Bearer(AccessToken.String()).
+				Do().Raw()
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Challenge %q deleted!\n", args[0])
+			return nil
+		},
+	}
+	return cmd
+}
+
 func HackChallengeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "hack EVENT/GAME",
@@ -110,7 +141,7 @@ func HackChallengeCmd() *cobra.Command {
 			}
 			return nil
 		},
-		Short: "Hack all challenge keys generating game keys.",
+		Short: "[HOST] Hack all challenge keys generating game keys.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			parts := strings.Split(args[0], "/")
 			eventName, gameName := parts[0], parts[1]

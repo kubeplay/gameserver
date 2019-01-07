@@ -45,7 +45,7 @@ func EventGetCmd() *cobra.Command {
 				}
 				for _, ev := range eventList.Items {
 					d := utils.GetDeltaDuration(ev.CreatedAt, "")
-					fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d.String())
+					fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d)
 				}
 			} else {
 				var ev types.Event
@@ -53,7 +53,7 @@ func EventGetCmd() *cobra.Command {
 					return err
 				}
 				d := utils.GetDeltaDuration(ev.CreatedAt, "")
-				fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d.String())
+				fmt.Fprintf(w, "%s\t%v\t%s\t\n", ev.Name, ev.Paused, d)
 			}
 			return nil
 		},
@@ -104,6 +104,34 @@ func EventCreateCmd() *cobra.Command {
 				return err
 			}
 			fmt.Printf("Event %q created with uid %s\n", ev.Name, ev.UID)
+			return nil
+		},
+	}
+}
+
+func EventDeleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:          "events",
+		Aliases:      []string{"event"},
+		PreRunE:      PreLoad,
+		SilenceUsage: true,
+		Short:        "Get or list specific event resource.",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("missing the resource name")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			requestURI := path.Join("/v1/events", args[0])
+			_, err := rest.NewRequest(nil, GameServerURL).Delete().
+				Bearer(AccessToken).
+				RequestURI(requestURI).
+				Do().Raw()
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Event %q deleted!\n", args[0])
 			return nil
 		},
 	}

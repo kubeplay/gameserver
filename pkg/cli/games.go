@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kubeplay/gameserver/pkg/rest"
+	"github.com/kubeplay/gameserver/pkg/store"
 	"github.com/kubeplay/gameserver/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -19,19 +20,14 @@ func GameCreateCmd() *cobra.Command {
 		Use:          "game",
 		Short:        "Create a new game",
 		SilenceUsage: true,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("missing the resource name")
-			}
-			return nil
-		},
-		PreRunE: PreLoad,
+		PreRunE:      PreLoad,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			game := types.Game{
 				TypeMeta:  types.TypeMeta{Kind: types.GameKind},
-				Metadata:  types.Metadata{Name: args[0]},
+				Metadata:  types.Metadata{Name: store.NewUUID()},
 				Challenge: O.Games.Challenge,
 			}
+
 			err := rest.NewRequest(nil, GameServerURL).Post().
 				RequestURI("/v1/events", O.Games.Event, "games").
 				Bearer(AccessToken.String()).
@@ -40,7 +36,7 @@ func GameCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Game %q created with uid %s\n", game.Name, game.UID)
+			fmt.Printf("Game %q created\n", game.Name)
 			return nil
 		},
 	}
@@ -181,10 +177,6 @@ func GameSolveCmd() *cobra.Command {
 			fmt.Printf("You've solved %q game key.\n", gs.KeyName)
 			fmt.Printf("%d/%d game keys solved.\n", len(gm.Status.Keys), gm.Status.RegisteredKeys)
 			if gm.Status.Phase == types.GameCompleted {
-				// // time.Since()
-				// startTime, _ := time.Parse(time.RFC3339, gm.Status.StartTime)
-				// endTime, _ := time.Parse(time.RFC3339, gm.Status.EndTime)
-				// time.Since(startTime.Add)
 				startTime, _ := time.Parse(time.RFC3339, gm.Status.StartTime)
 				elapsed := RoundTime(time.Since(startTime), time.Second).String()
 				if gm.Status.StartTime == "" {
@@ -196,4 +188,63 @@ func GameSolveCmd() *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func GameStartCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:                   "start EVENT/GAME",
+		PreRunE:               PreLoad,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("missing the resource name")
+			}
+			if !strings.Contains(args[0], "/") {
+				return errors.New("specify the resource name as <event>/<game>")
+			}
+			return nil
+		},
+		Short: "[HOST] Start an existing game",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			parts := strings.Split(args[0], "/")
+			eventName, gameName := parts[0], parts[1]
+			resp := rest.NewRequest(nil, GameServerURL).Post().
+				RequestURI("/v1/events", eventName, "games", gameName, "start").
+				Bearer(AccessToken.String()).
+				Do()
+			if err := resp.Error(); err != nil {
+				return err
+			}
+			var gm types.Game
+			if err := resp.Into(&gm); err != nil {
+				return err
+			}
+			w := new(tabwriter.Writer)
+			w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.AlignRight)
+			defer w.Flush()
+			fmt.Fprintln(w, "NAME\tCHALLENGE\tKEYS\tDURATION\tSTATUS\t")
+			startTime, _ := time.Parse(time.RFC3339, gm.Status.StartTime)
+			endTime, _ := time.Parse(time.RFC3339, gm.Status.EndTime)
+			delta := endTime.Sub(startTime)
+			var duration string
+			if gm.Status.EndTime != "" {
+				duration = RoundTime(delta, time.Second).String()
+			} else {
+				duration = RoundTime(time.Since(startTime), time.Second).String()
+			}
+			if gm.Status.StartTime == "" {
+				duration = "-"
+			}
+			completedKeys := fmt.Sprintf("%d/%d", len(gm.Status.Keys), gm.Status.RegisteredKeys)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t\n",
+				gm.Name,
+				gm.Challenge,
+				completedKeys,
+				duration,
+				gm.Status.Phase,
+			)
+			return nil
+		},
+	}
 }

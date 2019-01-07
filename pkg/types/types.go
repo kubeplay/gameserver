@@ -8,7 +8,7 @@ const GameKeyHeaderName = "X-Game-Key"
 
 // /v1/challenges
 type Challenge struct {
-	TypeMeta `json:",inline"`
+	TypeMeta `json:",inline" yaml:",inline"`
 	Metadata `json:"metadata"`
 
 	Keys      map[string]Key `json:"keys"`
@@ -24,7 +24,7 @@ type ChallengeList struct {
 
 // /v1/events/<name>
 type Event struct {
-	TypeMeta `json:",inline"`
+	TypeMeta `json:",inline" yaml:",inline"`
 	Metadata `json:"metadata"`
 
 	// Paused blocks new games from starting
@@ -43,7 +43,7 @@ type EventList struct {
 
 // /v1/events/<name>/game
 type Game struct {
-	TypeMeta `json:",inline"`
+	TypeMeta `json:",inline" yaml:",inline"`
 	Metadata `json:"metadata"`
 
 	Challenge string     `json:"challenge"`
@@ -88,21 +88,26 @@ type Key struct {
 	Weight      float32 `json:"weight"`
 }
 
-// /v1/player
-type Player struct {
-	TypeMeta `json:",inline"`
+// https://casbin.org/en/
+type Policy struct {
+	TypeMeta `json:",inline" yaml:",inline"`
 	Metadata `json:"metadata"`
 
-	FirstName string `json:"firstName"`
-	SurName   string `json:"surName"`
-	Email     string `json:"email"`
+	Subject string       `json:"subject"`
+	Rules   []PolicyRule `json:"rules"`
 }
 
-type PlayerList struct {
+type PolicyList struct {
 	TypeMeta `json:",inline"`
 	ListMeta
 
-	Items []Player `json:"items"`
+	Items []Policy `json:"items"`
+}
+
+type PolicyRule struct {
+	// ABAC Mode
+	Object  string `json:"object"`
+	Actions string `json:"actions"`
 }
 
 type PlayerClaims struct {

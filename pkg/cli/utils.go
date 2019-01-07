@@ -87,7 +87,29 @@ type CmdGames struct {
 type CmdOptions struct {
 	ShowVersionAndExit bool
 
-	Games CmdGames
+	Games       CmdGames
+	CreateInput string
+}
+
+type CreateVar struct {
+}
+
+func (v *CreateVar) String() string {
+	fmt.Printf("STRING: %#v\n", v)
+	return ""
+}
+func (v *CreateVar) Set(val string) error {
+	fmt.Printf("SET: %#v\n", v)
+	data, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return err
+	}
+	fmt.Println("SET HERE", val, string(data))
+	return nil
+}
+func (v *CreateVar) Type() string {
+	fmt.Printf("SET %#v\n", v)
+	return ""
 }
 
 func SolveGameKey(gameKeyHash, gameUID, keyName string, key types.Key) bool {

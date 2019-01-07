@@ -1,0 +1,16 @@
+kind: Challenge
+metadata:
+  name: foo
+keys:
+  main:
+    value: 614450fb-bf9a-42b6-951e-f1ddcbd87dff
+    description: main key game
+    weight: 0.9
+  bonus-1:
+    value: 12800495-595a-4e8a-ae38-a04b4db22da8
+    description: bonu game key 1
+    weight: 0.2
+  bonus-2:
+    value: 055c5eba-06b9-4f39-9a4a-0f8e4ebd6c12
+    description: bonus game key 2
+    weight: 0.3

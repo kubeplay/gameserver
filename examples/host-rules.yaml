@@ -1,0 +1,13 @@
+kind: Policy
+metadata:
+  name: 'github|sandromello'
+subject: 'github|sandromello'
+rules:
+  - object: /v1/challenges
+    actions: '(GET)|(POST)'
+  - object: /v1/challenges/:resourceName
+    actions: '(GET)|(PUT)|(DELETE)'
+  - object: /v1/policies
+    actions: '(GET)|(POST)'
+  - object: /v1/policies/:resourceName
+    actions: '(GET)|(DELETE)|(PUT)'

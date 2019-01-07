@@ -8,6 +8,8 @@ import (
 	"github.com/kubeplay/gameserver/pkg/types"
 )
 
+const UserPoliciesFile = "/tmp/user-policies.csv"
+
 type config struct {
 	RegisteredAPITypes []types.Object
 	Version            string
@@ -80,17 +82,17 @@ func (c *config) Routes() []RouteInfo {
 			},
 		},
 		{
-			PathPrefix:  "/players",
-			Middlewares: handlers.Player.Middlewares(),
+			PathPrefix:  "/policies",
+			Middlewares: handlers.Policy.Middlewares(),
 			SubRoutes: []Route{
 				{
 					Path:    "",
-					Handler: handlers.Player.HandlerList(),
+					Handler: handlers.Policy.HandlerList(),
 					Methods: []string{"POST", "GET"},
 				},
 				{
 					Path:    "/{resourceName}",
-					Handler: handlers.Player.Handler(),
+					Handler: handlers.Policy.Handler(),
 					Methods: []string{"GET", "DELETE", "PUT"},
 				},
 			},

@@ -16,7 +16,7 @@ type TypeMeta struct {
 	// Servers may infer this from the endpoint the client submits requests to.
 	// Cannot be updated.
 	// In CamelCase.
-	Kind string `json:"kind"`
+	Kind string `json:"kind" yaml:"kind"`
 
 	// APIVersion defines the versioned schema of this representation of an object.
 	// Servers should convert recognized schemas to the latest internal value, and
@@ -49,8 +49,8 @@ func (o *Game) New() Object          { return &Game{} }
 func (o *GameList) New() Object      { return &GameList{} }
 func (o *Challenge) New() Object     { return &Challenge{} }
 func (o *ChallengeList) New() Object { return &ChallengeList{} }
-func (o *Player) New() Object        { return &Player{} }
-func (o *PlayerList) New() Object    { return &PlayerList{} }
+func (o *Policy) New() Object        { return &Policy{} }
+func (o *PolicyList) New() Object    { return &PolicyList{} }
 func (o *Event) New() Object         { return &Event{} }
 func (o *EventList) New() Object     { return &EventList{} }
 
